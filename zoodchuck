@@ -1,0 +1,56 @@
+#!/bin/bash
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+#
+# ./zoodchuck MyVideo.ogg
+
+fileIn="$1"
+chopper=`which oggz-chop`
+
+if [ -z "$chopper" ]; then
+  echo -e "Missing dependency: oggz-chop.\nTry sudo apt-get install oggz-tools."
+  exit 1
+fi
+
+if [ -z "$fileIn" ]; then
+  echo "No file provided."
+  exit 1
+fi
+
+interval=2
+
+i=0
+
+for startMin in `seq 0 $interval 82`; do
+  startHr=$(( $startMin / 60 ))
+
+  endMin=$(( $startMin + $interval ))
+  endHr=$(( $endMin / 60 ))
+  endMin=$(( $endMin - ( $endHr * 60 ) ))
+
+  startMin=$(( $startMin - ( $startHr * 60 ) ));
+
+  [[ $startMin -lt 10 ]] && startMin="0$startMin"
+  [[ $endMin -lt 10 ]] && endMin="0$endMin"
+
+  startTime="0$startHr:$startMin:00"
+  endTime="0$endHr:$endMin:00"
+
+  fileOut="$i.ogg"
+  [[ $i -lt 10 ]] && fileOut="0$fileOut"
+
+  echo "$fileOut: $startTime - $endTime"
+
+  oggz-chop -s $startTime -e $endTime -o $fileOut $fileIn
+
+  i=$(($i + 1))
+done
